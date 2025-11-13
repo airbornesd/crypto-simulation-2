@@ -1,0 +1,30 @@
+binance:
+  base_url: ${BINANCE_BASE_URL}
+  endpoints:
+    ticker: "/api/v3/ticker/price"
+
+coinbase:
+  base_url: "https://api.coinbase.com/v2"
+  endpoints:
+    spot: "/prices/{pair}/spot"
+
+coin_gecko:
+  base_url: ${COIN_GECKO_BASE_URL}
+  endpoints:
+    markets: "/coins/markets"
+
+alpha_vantage:
+  base_url: "https://www.alphavantage.co/query"
+  api_key_env: "ALPHA_VANTAGE_KEY"
+
+financial_modeling:
+  base_url: "https://financialmodelingprep.com/api/v3"
+  endpoints:
+    quote: "/quote/{symbol}"
+  api_key_env: "FMP_API_KEY"
+
+metals:
+  gold:
+    base_url: "https://example.com/gold"
+  silver:
+    base_url: "https://example.com/silver"
