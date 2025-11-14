@@ -1,0 +1,5 @@
+kafka-python
+PyYAML
+python-dotenv
+requests
+pandas
