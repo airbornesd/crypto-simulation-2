@@ -1,0 +1,12 @@
+bootstrap_servers: "localhost:9092"
+acks: "all"
+retries: 3
+linger_ms: 5
+batch_size: 32768
+topics:
+  - name: crypto_trades
+    partitions: 3
+  - name: gold_tradesa
+    partitions: 3
+  - name: user_profiles
+    partitions: 2

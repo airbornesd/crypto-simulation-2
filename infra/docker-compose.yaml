@@ -1,0 +1,72 @@
+services:
+  kafka:
+    image: apache/kafka:latest
+    platform: linux/amd64
+    container_name: kafka
+    user: "0"
+    ports:
+      - "9092:9092"
+    environment:
+      # KRaft (no zookeeper)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      # topic & partition config
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+      # log settings
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_LOG_RETENTION_HOURS: 12
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    restart: unless-stopped
+
+  producer:
+    build:
+      context: .. # project root
+      dockerfile: infra/kafka_setup/Dockerfile
+    container_name: fintech-producer
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - LOG_LEVEL=info
+    volumes:
+      - ../src:/app/src
+      - ../scripts:/app/scripts
+      - ../config:/app/config
+    command: ["python", "scripts/start_generator.py"]
+    restart: on-failure
+
+  consumer:
+    build:
+      context: .. # project root
+      dockerfile: infra/kafka_setup/Dockerfile
+    container_name: fintech-consumer
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - LOG_LEVEL=info
+    volumes:
+      - ../src:/app/src
+      - ../scripts:/app/scripts
+      - ../config:/app/config
+      - ../data:/app/data
+    command: ["python", "scripts/start_consumer.py"]
+    restart: on-failure
+
+volumes:
+  kafka_data:
