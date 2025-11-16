@@ -1,11 +1,22 @@
 ## data generation
 
-we'll use real market data apis for crypto and gold, and simulate the rest:
+### ✅ what’s been built
 
-- use randomuser.me for generating fake users
-- integrate real market data APIs for crypto and gold prices
-- generate transactions that reference both the fake users and the real market data
-- generate fraud data based on patterns and anomalies
+- **end-to-end fintech data generator** — simulates crypto, gold, fraud, and user data.
+- **real + simulated data sources** — integrates apis and random event generation.
+- **kafka-based streaming pipeline** — real-time producer → broker → consumer setup.
+- **containerized infra** — official apache kafka (kraft), python producer & consumer in docker.
+- **data persistence layer (bronze)** — consumer writes streamed data into partitioned parquet files.
+- **fully functional EL part of ELT pipeline** — extract + load complete and verified.
+
+---
+
+### 🧩 what’s left
+
+- **T (transform)** — dbt/spark models to clean, join, and aggregate parquet data.
+- **serving layer** — fastapi or streamlit dashboards for analytics.
+- **observability** — prometheus/grafana metrics, lag tracking.
+- **optional future** — cdc sync (debezium), feature store for ml features.
 
 ```bash
 
@@ -74,6 +85,10 @@ data_generation/
 
 ```
 
+---
+
 > export PYTHONPATH="$PWD"
 
 > find . | grep -E "(/**pycache**$|\.pyc$|\.pyo$)" | xargs rm -rf
+
+> find . \( -name '**pycache**' -o -name '_.pyc' -o -name '_.pyo' \) -print -exec rm -rf {} +
