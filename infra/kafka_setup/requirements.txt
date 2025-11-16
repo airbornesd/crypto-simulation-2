@@ -3,3 +3,5 @@ PyYAML
 python-dotenv
 requests
 pandas
+faker
+pyarrow

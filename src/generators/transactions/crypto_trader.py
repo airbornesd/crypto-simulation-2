@@ -2,11 +2,10 @@ import time
 import random
 from src.utils.logger import get_logger
 from src.utils.error_handler import safe_execute
-from src.utils.config_loader import load_yaml_config
-from src.producers.topic_manager import create_topics
-from src.producers.kafka_producer import create_producer, send_event
+from src.producers.kafka_producer import get_kafka_producer, send_to_kafka
+from src.producers.topic_manager import get_topic
 
-logger = get_logger("start_generator")
+logger = get_logger("crypto_trader")
 
 
 def generate_crypto_trade(user_id: str, symbols=None) -> dict:
@@ -44,18 +43,14 @@ def safe_generate_crypto_trade(user_id: str, symbols=None):
     return safe_execute(generate_crypto_trade, user_id, symbols)
 
 
-def produce_crypto_trades(config_path="src/config/kafka_config.yaml"):
+def produce_crypto_trades():
     """
     continuously produce crypto trades to kafka.
     """
-    cfg = load_yaml_config(config_path)
-    topic = "crypto_trades"
-
-    # ensure topics exist
-    create_topics(config_path)
+    topic = get_topic("crypto")
 
     # initialize producer
-    producer = create_producer(config_path)
+    producer = get_kafka_producer()
     if not producer:
         logger.error("producer initialization failed — exiting")
         return
@@ -64,16 +59,29 @@ def produce_crypto_trades(config_path="src/config/kafka_config.yaml"):
 
     logger.info("starting crypto trade stream ...")
 
-    while True:
-        user = random.choice(users)
-        trade = safe_generate_crypto_trade(user)
+    try:
+        while True:
+            user = random.choice(users)
+            trade = safe_generate_crypto_trade(user)
 
-        if trade:
-            send_event(producer, topic, trade)
-        else:
-            logger.warning(f"failed to generate trade for {user}")
+            if trade:
+                send_to_kafka(
+                    producer,
+                    topic,
+                    trade.get("trade_id", trade.get("user_id", "unknown")),
+                    trade,
+                )
+            else:
+                logger.warning(f"failed to generate trade for {user}")
 
-        time.sleep(random.uniform(0.5, 2.0))  # adjustable rate
+            time.sleep(random.uniform(0.5, 2.0))  # adjustable rate
+    except KeyboardInterrupt:
+        logger.info("crypto trade stream interrupted")
+    except Exception as e:
+        logger.error(f"error in crypto trade stream: {e}")
+    finally:
+        if producer:
+            producer.close()
 
 
 if __name__ == "__main__":
